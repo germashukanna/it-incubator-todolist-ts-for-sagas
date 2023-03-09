@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, {AxiosResponse} from 'axios'
 
 const settings = {
     withCredentials: true,
@@ -29,14 +29,16 @@ export const todolistsAPI = {
         const promise = instance.put<ResponseType>(`todo-lists/${id}`, {title: title});
         return promise;
     },
-    getTasks(todolistId: string) {
-        return instance.get<GetTasksResponse>(`todo-lists/${todolistId}/tasks`);
+    getTasks(todolistId: string): Promise<GetTasksResponse> {
+        return instance.get<GetTasksResponse>(`todo-lists/${todolistId}/tasks`)
+            .then(res => res.data)
     },
-    deleteTask(todolistId: string, taskId: string) {
-        return instance.delete<ResponseType>(`todo-lists/${todolistId}/tasks/${taskId}`);
+    deleteTask(todolistId: string, taskId: string): Promise<ResponseType> {
+        return instance.delete<ResponseType>(`todo-lists/${todolistId}/tasks/${taskId}`)
+            .then(res => res.data)
     },
     createTask(todolistId: string, taskTitile: string) {
-        return instance.post<ResponseType<{ item: TaskType}>>(`todo-lists/${todolistId}/tasks`, {title: taskTitile});
+        return instance.post<ResponseType<{ item: TaskType }>>(`todo-lists/${todolistId}/tasks`, {title: taskTitile});
     },
     updateTask(todolistId: string, taskId: string, model: UpdateTaskModelType) {
         return instance.put<ResponseType<TaskType>>(`todo-lists/${todolistId}/tasks/${taskId}`, model);
@@ -51,18 +53,20 @@ export type LoginParamsType = {
     captcha?: string
 }
 
+export type MeResponseType = ResponseType<{ id: number; email: string; login: string }>;
+
 export const authAPI = {
     login(data: LoginParamsType) {
-        const promise = instance.post<ResponseType<{userId?: number}>>('auth/login', data);
+        const promise = instance.post<ResponseType<{ userId?: number }>>('auth/login', data);
         return promise;
     },
     logout() {
-        const promise = instance.delete<ResponseType<{userId?: number}>>('auth/login');
+        const promise = instance.delete<ResponseType<{ userId?: number }>>('auth/login');
         return promise;
     },
     me() {
-       const promise =  instance.get<ResponseType<{id: number; email: string; login: string}>>('auth/me');
-       return promise
+        const promise = instance.get<MeResponseType>('auth/me');
+        return promise.then(res => res.data)
     }
 }
 
@@ -78,12 +82,14 @@ export type ResponseType<D = {}> = {
     messages: Array<string>
     data: D
 }
+
 export enum TaskStatuses {
     New = 0,
     InProgress = 1,
     Completed = 2,
     Draft = 3
 }
+
 export enum TaskPriorities {
     Low = 0,
     Middle = 1,
@@ -91,6 +97,7 @@ export enum TaskPriorities {
     Urgently = 3,
     Later = 4
 }
+
 export type TaskType = {
     description: string
     title: string
@@ -111,7 +118,7 @@ export type UpdateTaskModelType = {
     startDate: string
     deadline: string
 }
-type GetTasksResponse = {
+export type GetTasksResponse = {
     error: string | null
     totalCount: number
     items: TaskType[]
